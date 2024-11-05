@@ -14,6 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+case $(uname -m) in
+  aarch64) 
+    export K8S_ARCH="arm64" ;;
+  x86_64)
+    export K8S_ARCH="amd64" ;;
+  *)
+    echo "Unsupported CPU architecture: $(uname -m)"
+    exit 1
+esac
+
 # check if kubectl installed
 function check_kubectl {
   echo "checking kubectl"
@@ -120,7 +130,7 @@ verify_isulad_installed() {
 
 # install CNI plugins
 function install_cni_plugins() {
-  CNI_DOWNLOAD_ADDR=${CNI_DOWNLOAD_ADDR:-"https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz"}
+  CNI_DOWNLOAD_ADDR=${CNI_DOWNLOAD_ADDR:-"https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-${ARCH}-v1.1.1.tgz"}
   CNI_PKG=${CNI_DOWNLOAD_ADDR##*/}
   CNI_CONF_OVERWRITE=${CNI_CONF_OVERWRITE:-"true"}
   echo -e "The installation of the cni plugin will overwrite the cni config file. Use export CNI_CONF_OVERWRITE=false to disable it."
@@ -220,9 +230,9 @@ function install_docker() {
 
 function install_crio() {
   CRIO_VERSION="1.28.2"
-  sudo rm -rf cri-o.amd64.v${CRIO_VERSION}.tar.gz && sudo rm -rf cri-o
-  sudo wget https://storage.googleapis.com/cri-o/artifacts/cri-o.amd64.v${CRIO_VERSION}.tar.gz
-  sudo tar -zxvf cri-o.amd64.v${CRIO_VERSION}.tar.gz
+  sudo rm -rf cri-o.${ARCH}.v${CRIO_VERSION}.tar.gz && sudo rm -rf cri-o
+  sudo wget https://storage.googleapis.com/cri-o/artifacts/cri-o.${ARCH}.v${CRIO_VERSION}.tar.gz
+  sudo tar -zxvf cri-o.${ARCH}.v${CRIO_VERSION}.tar.gz
   sudo sed -i 's/\/usr\/bin\/env sh/!\/bin\/bash/' cri-o/install
   sudo sed -i 's/ExecStart=.*/ExecStart=\/usr\/local\/bin\/crio --selinux=false \\/' cri-o/contrib/crio.service
   cd cri-o
@@ -230,7 +240,7 @@ function install_crio() {
   sudo systemctl daemon-reload
   sudo systemctl enable --now crio
   sudo systemctl restart crio
-  cd .. && sudo rm -rf cri-o.amd64.v${CRIO_VERSION}.tar.gz && sudo rm -rf cri-o
+  cd .. && sudo rm -rf cri-o.${ARCH}.v${CRIO_VERSION}.tar.gz && sudo rm -rf cri-o
 }
 
 install_isulad() {
