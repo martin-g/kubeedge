@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 30
     name: Verify vendor, licenses, do lint
     env:
-      GOPATH: /home/runner/work/${{ github.repository }}
+      GOPATH: ~/work/${{ github.repository }}
     steps:
       - name: Install Go
         uses: actions/setup-go@v4
@@ -47,7 +47,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get install -y jq
+          sudo dnf install -y jq
 
       - name: Run verify test
         run: make verify
