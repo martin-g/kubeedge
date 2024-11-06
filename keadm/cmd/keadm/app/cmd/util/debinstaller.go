@@ -52,6 +52,7 @@ func (d *DebOS) InstallMQTT() error {
 	}
 
 	//Install mqttInst
+	// TODO: martin-g: Does this need support for other OSes, e.g. openEuler ?!
 	cmd = NewCommand("apt-get install -y --allow-change-held-packages --allow-downgrades mosquitto")
 	if err := cmd.Exec(); err != nil {
 		return err

@@ -203,6 +203,20 @@ EOF'
 
 function install_docker() {
   CRIDOCKERD_VERSION="v0.3.8"
+
+  source /etc/os-release
+
+  if [ "${ID}" = "ubuntu" ]; then
+    install_docker_ubuntu
+  elif [ "${ID}" = "openEuler" ]; then
+    install_docker_openEuler
+  else
+    echo "Unsupported OS: ${ID}"
+    exit 123
+  fi
+}
+
+function install_docker_ubuntu() {
   sudo apt-get update
   sudo apt-get install \
     apt-transport-https \
@@ -216,6 +230,28 @@ function install_docker() {
                  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
   sudo apt-get update
   sudo apt-get install docker-ce docker-ce-cli containerd.io
+  git clone https://github.com/Mirantis/cri-dockerd.git -b ${CRIDOCKERD_VERSION}
+  cd cri-dockerd
+  make cri-dockerd
+  sudo install -o root -g root -m 0755 cri-dockerd /usr/local/bin/cri-dockerd
+  sudo install packaging/systemd/* /etc/systemd/system
+  sudo sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now cri-docker.socket
+  sudo systemctl restart cri-docker
+  cd .. && sudo rm -rf cri-dockerd
+}
+
+function install_docker_openEuler() {
+  sudo dnf update
+  sudo dnf install -y \
+    ca-certificates \
+    curl \
+    wget \
+    gnupg2 
+  
+  wget https://raw.githubusercontent.com/cnrancher/euler-packer/refs/heads/main/scripts/others/install-docker.sh
+  bash install-docker.sh --buildx --crictl
   git clone https://github.com/Mirantis/cri-dockerd.git -b ${CRIDOCKERD_VERSION}
   cd cri-dockerd
   make cri-dockerd
@@ -252,7 +288,22 @@ install_isulad() {
     cd $(dirname $0)
     pwd
   )
-  sudo apt-get install -y g++ libprotobuf-dev protobuf-compiler protobuf-compiler-grpc libgrpc++-dev libgrpc-dev libtool automake autoconf cmake make pkg-config libyajl-dev zlib1g-dev libselinux1-dev libseccomp-dev libcap-dev libsystemd-dev git libarchive-dev libcurl4-gnutls-dev openssl libdevmapper-dev python3 libtar0 libtar-dev libhttp-parser-dev libwebsockets-dev
+  
+  source /etc/os-release
+
+  if [ "${ID}" = "ubuntu" ]; then
+    sudo apt-get install -y g++ libprotobuf-dev protobuf-compiler protobuf-compiler-grpc libgrpc++-dev libgrpc-dev libtool automake autoconf cmake make pkg-config libyajl-dev zlib1g-dev libselinux1-dev libseccomp-dev libcap-dev libsystemd-dev git libarchive-dev libcurl4-gnutls-dev openssl libdevmapper-dev python3 libtar0 libtar-dev libhttp-parser-dev libwebsockets-dev jq
+  elif [ "${ID}" = "openEuler" ]; then
+    sudo dnf install -y gcc-toolset-12-gcc-c++ protobuf-devel protobuf-compiler grpc grpc-devel libtool automake autoconf cmake make pkgconf yajl-devel zlib-devel libselinux-devel libseccomp-devel libcap-devel systemd-devel git libarchive-devel libcurl openssl python3 libtar libtar-devel http-parser-devel libwebsockets-devel jq
+    # No matching packages: libdevmapper-dev
+    export PATH="/opt/openEuler/gcc-toolset-12/root/usr/bin:${PATH}"
+    export LD_LIBRARY_PATH="/opt/openEuler/gcc-toolset-12/root/usr/lib64:${LD_LIBRARY_PATH}"
+    export CPATH="/opt/openEuler/gcc-toolset-12/root/usr/include:${CPATH}"
+  else
+    echo "Unsupported OS: ${ID}"
+    exit 123
+  fi
+
   BUILD_DIR=/tmp/build_isulad
 
   sudo rm -rf $BUILD_DIR
@@ -300,7 +351,6 @@ install_isulad() {
   sudo make -j $(nproc)
   sudo make install
 
-  sudo apt-get install -y jq
   sudo sed -i 's#/usr/bin/isulad#/usr/local/bin/isulad#g' ../src/contrib/init/isulad.service
   sudo sed -i 's#-/etc/sysconfig/iSulad#/etc/isulad/daemon.json#g' ../src/contrib/init/isulad.service
   TMP_FILE=/home/runner/tmp.json
