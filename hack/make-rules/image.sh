@@ -71,6 +71,7 @@ function get_dockerfile_by_target() {
 }
 
 function build_images() {
+  set -x
   local -a targets=()
 
   for arg in "$@"; do
@@ -87,15 +88,14 @@ function build_images() {
     IMAGE_NAME="$(get_imagename_by_target ${arg})"
     DOCKERFILE_PATH="$(get_dockerfile_by_target ${arg})"
 
-    set -x
     docker build --build-arg GO_LDFLAGS="${GO_LDFLAGS}" -t kubeedge/${IMAGE_NAME}:${IMAGE_TAG} -f ${DOCKERFILE_PATH} .
-    set +x
-
+  
     if [[ "${DOCKER_BUILD_AND_SYSTEM_PRUNE}" = "true" ]]; then
       docker builder prune -f
       docker system prune -f
     fi
   done
+  set +x
 }
 
 build_images "$@"
