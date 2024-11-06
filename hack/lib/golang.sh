@@ -210,6 +210,7 @@ IFS=" " read -ra KUBEEDGE_ALL_TARGETS <<< "$(kubeedge::golang::get_all_targets)"
 IFS=" " read -ra KUBEEDGE_ALL_BINARIES<<< "$(kubeedge::golang::get_all_binaries)"
 
 kubeedge::golang::build_binaries() {
+  set -x
   kubeedge::check::env
   local -a targets=()
   local binArg
@@ -237,7 +238,7 @@ kubeedge::golang::build_binaries() {
     go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -gcflags="${gogcflags:-}" -ldflags "${goldflags:-}" $bin
     set +x
   done
-
+  set +x
 }
 
 KUBEEDGE_ALL_CROSS_GOARMS=(
