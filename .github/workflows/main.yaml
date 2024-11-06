@@ -80,6 +80,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     needs: common-prepare
     strategy:
+      fail-fast: false
       matrix:
         runner: [ubuntu-22.04, ARM64]
     timeout-minutes: 30
@@ -100,6 +101,7 @@ jobs:
   build:
     runs-on: ${{ matrix.runner }}
     strategy:
+      fail-fast: false
       matrix:
         runner: [ubuntu-22.04, ARM64]
     timeout-minutes: 30
@@ -145,6 +147,7 @@ jobs:
   basic_test:
     runs-on: ${{ matrix.runner }}
     strategy:
+      fail-fast: false
       matrix:
         runner: [ubuntu-22.04, ARM64]
     timeout-minutes: 30
@@ -197,6 +200,7 @@ jobs:
   e2e_test:
     runs-on: ${{ matrix.runner }}
     strategy:
+      fail-fast: false
       matrix:
         runner: [ubuntu-22.04, ARM64]
         cases:
@@ -276,6 +280,7 @@ jobs:
   keadm_deprecated_e2e_test:
     runs-on: ${{ matrix.runner }}
     strategy:
+      fail-fast: false
       matrix:
         runner: [ubuntu-22.04, ARM64]
     timeout-minutes: 30
@@ -327,6 +332,7 @@ jobs:
   keadm_e2e_test:
     runs-on: ${{ matrix.runner }}
     strategy:
+      fail-fast: false
       matrix:
         runner: [ubuntu-22.04, ARM64]
     timeout-minutes: 30
@@ -373,6 +379,7 @@ jobs:
   docker_build:
     runs-on: ${{ matrix.runner }}
     strategy:
+      fail-fast: false
       matrix:
         runner: [ubuntu-22.04, ARM64]
     timeout-minutes: 40
@@ -399,6 +406,7 @@ jobs:
   container_runtime_test:
     runs-on: ${{ matrix.runner }}
     strategy:
+      fail-fast: false
       matrix:
         runner: [ubuntu-22.04, ARM64]
         container-runtime: [ 'isulad', 'cri-o', 'docker' ]
@@ -449,6 +457,7 @@ jobs:
       env:
         GO111MODULE: on
       strategy:
+        fail-fast: false
         matrix:
           runner: [ubuntu-22.04, ARM64]
           cases:
