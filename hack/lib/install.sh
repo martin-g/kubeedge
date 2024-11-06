@@ -16,9 +16,9 @@
 
 case $(uname -m) in
   aarch64) 
-    export K8S_ARCH="arm64" ;;
+    export ARCH="arm64" ;;
   x86_64)
-    export K8S_ARCH="amd64" ;;
+    export ARCH="amd64" ;;
   *)
     echo "Unsupported CPU architecture: $(uname -m)"
     exit 1
