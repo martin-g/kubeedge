@@ -23,7 +23,7 @@ env:
 
 jobs:
   lint:
-    runs-on: ARM64
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     name: Verify vendor, licenses, do lint
     env:
@@ -47,7 +47,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo dnf install -y jq
+          sudo apt-get install -y jq
 
       - name: Run verify test
         run: make verify
@@ -56,9 +56,29 @@ jobs:
       - name: Run lint test
         run: make lint
         working-directory: ./src/github.com/${{ github.repository }}
+  
+  common-prepare:
+    runs-on: ubuntu-22.04
+    name: Prepare environment
+    steps:
+      - name: Export custom env vars
+        run: |
+          case $(uname -m) in
+            aarch64) 
+              echo "ARCH=arm64" >> $GITHUB_ENV ;;
+            x86_64)
+              echo "ARCH=amd64" >> $GITHUB_ENV ;;
+            *)
+              echo "Unsupported CPU architecture: $(uname -m)"
+              exit 1
+          esac
 
   image-prepare:
-    runs-on: ARM64
+    runs-on: ${{ matrix.runner }}
+    needs: common-prepare
+    strategy:
+      matrix:
+        runner: [ubuntu-22.04, ARM64]
     timeout-minutes: 30
     name: Prepare kubeedge/build-tools image
     steps:
@@ -75,7 +95,10 @@ jobs:
           path: /home/runner/build-tools
 
   build:
-    runs-on: ARM64
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner: [ubuntu-22.04, ARM64]
     timeout-minutes: 30
     name: Multiple build
     needs: image-prepare
@@ -117,7 +140,10 @@ jobs:
       - run: make crossbuild WHAT=keadm OS=GOOSwindows BUILD_WITH_CONTAINER=false
 
   basic_test:
-    runs-on: ARM64
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner: [ubuntu-22.04, ARM64]
     timeout-minutes: 30
     name: Unit test, integration test edge
     env:
@@ -166,9 +192,10 @@ jobs:
       - run: make integrationtest
 
   e2e_test:
-    runs-on: ARM64
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
+        runner: [ubuntu-22.04, ARM64]
         cases:
           - protocol: WebSocket
             version: v1.29.0
@@ -202,7 +229,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/arm64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ env.ARCH }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -244,7 +271,10 @@ jobs:
             /tmp/edgecore.log
 
   keadm_deprecated_e2e_test:
-    runs-on: ARM64
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner: [ubuntu-22.04, ARM64]
     timeout-minutes: 30
     name: Keadm deprecated e2e test
     needs: image-prepare
@@ -265,7 +295,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/arm64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ env.ARCH }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -292,9 +322,13 @@ jobs:
       - run: make keadm_deprecated_e2e
 
   keadm_e2e_test:
-    runs-on: ARM64
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner: [ubuntu-22.04, ARM64]
     timeout-minutes: 30
     name: Keadm e2e test
+    needs: common-prepare
     env:
       GO111MODULE: on
     steps:
@@ -312,7 +346,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/arm64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ env.ARCH }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -334,7 +368,10 @@ jobs:
       - run: make keadm_e2e
 
   docker_build:
-    runs-on: ARM64
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner: [ubuntu-22.04, ARM64]
     timeout-minutes: 40
     name: Multiple docker image build
     steps:
@@ -357,11 +394,13 @@ jobs:
           make image
 
   container_runtime_test:
-    runs-on: ARM64
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
+        runner: [ubuntu-22.04, ARM64]
         container-runtime: [ 'isulad', 'cri-o', 'docker' ]
     name: container runtime e2e test
+    needs: common-prepare
     env:
       GO111MODULE: on
     steps:
@@ -379,7 +418,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/arm64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ env.ARCH }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -400,7 +439,7 @@ jobs:
             /tmp/edgecore.log
 
   conformance_e2e_test:
-      runs-on: ARM64
+      runs-on: ${{ matrix.runner }}
       timeout-minutes: 60
       name: conformance e2e test
       needs: image-prepare
@@ -408,6 +447,7 @@ jobs:
         GO111MODULE: on
       strategy:
         matrix:
+          runner: [ubuntu-22.04, ARM64]
           cases:
             - conformance-type: "conformance"
               result-name: "conformance-test-results"
@@ -427,7 +467,7 @@ jobs:
         - name: Install dependencies
           run: |
             go install sigs.k8s.io/kind@v0.22.0
-            curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/arm64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ env.ARCH }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
         - name: Checkout code
           uses: actions/checkout@v4
