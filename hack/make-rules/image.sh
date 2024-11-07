@@ -40,7 +40,8 @@ ALL_IMAGES_AND_TARGETS=(
 )
 
 GO_LDFLAGS="$(${KUBEEDGE_ROOT}/hack/make-rules/version.sh)"
-IMAGE_TAG=$(git describe --tags)
+#IMAGE_TAG=$(git describe --tags)
+IMAGE_TAG=v1.19.0-beta.0-63-gd0d4bcd3f
 DOCKER_BUILD_AND_SYSTEM_PRUNE=${DOCKER_BUILD_AND_SYSTEM_PRUNE:-"false"}
 
 function get_imagename_by_target() {
