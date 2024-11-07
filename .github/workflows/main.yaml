@@ -42,7 +42,7 @@ jobs:
 
       - uses: actions/cache@v4
         with:
-          path: /home/runner/go/pkg/mod
+          path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
       - name: Install dependencies
@@ -110,7 +110,7 @@ jobs:
     steps:
       - uses: actions/cache@v4
         with:
-          path: /home/runner/go/pkg/mod
+          path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
       - name: Checkout code
@@ -162,7 +162,7 @@ jobs:
 
       - uses: actions/cache@v4
         with:
-          path: /home/runner/go/pkg/mod
+          path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
       - name: Install dependencies
@@ -229,7 +229,7 @@ jobs:
 
       - uses: actions/cache@v4
         with:
-          path: /home/runner/go/pkg/mod
+          path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
       - name: Install dependencies
@@ -296,7 +296,7 @@ jobs:
 
       - uses: actions/cache@v4
         with:
-          path: /home/runner/go/pkg/mod
+          path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
       - name: Install dependencies
@@ -348,7 +348,7 @@ jobs:
 
       - uses: actions/cache@v4
         with:
-          path: /home/runner/go/pkg/mod
+          path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
       - name: Install dependencies
@@ -387,7 +387,7 @@ jobs:
     steps:
       - uses: actions/cache@v4
         with:
-          path: /home/runner/go/pkg/mod
+          path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
       - name: Checkout code
@@ -422,7 +422,7 @@ jobs:
 
       - uses: actions/cache@v4
         with:
-          path: /home/runner/go/pkg/mod
+          path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
       - name: Install dependencies
@@ -473,7 +473,7 @@ jobs:
 
         - uses: actions/cache@v4
           with:
-            path: /home/runner/go/pkg/mod
+            path: ~/go/pkg/mod
             key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 
         - name: Install dependencies
