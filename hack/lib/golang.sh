@@ -53,7 +53,8 @@ kubeedge::version::get_version_info() {
     GIT_TREE_STATE="dirty"
   fi
 
-  GIT_VERSION=$(git describe --tags --abbrev=14 "${GIT_COMMIT}^{commit}" 2>/dev/null)
+  #GIT_VERSION=$(git describe --tags --abbrev=14 "${GIT_COMMIT}^{commit}" 2>/dev/null)
+  GIT_VERSION=v1.19.0-beta.0-62-gf6819974e19ae6
 
   # This translates the "git describe" to an actual semver.org
   # compatible semantic version that looks something like this:

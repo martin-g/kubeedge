@@ -59,7 +59,7 @@ jobs:
   
   common-prepare:
     runs-on: ubuntu-22.04
-    name: Prepare environment
+    name: Export outputs
     outputs:
       arch: ${{ steps.outputs.outputs.arch }}
     steps:
