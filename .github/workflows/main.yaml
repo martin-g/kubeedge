@@ -67,8 +67,6 @@ jobs:
             arch: amd64
           - runner: ARM64
             arch: arm64
-          - runner: macos-14
-            arch: arm64
         
     timeout-minutes: 30
     name: Prepare kubeedge/build-tools image
@@ -95,8 +93,7 @@ jobs:
             arch: amd64
           - runner: ARM64
             arch: arm64
-          - runner: macos-14
-            arch: arm64
+
     timeout-minutes: 30
     name: Multiple build
     needs: image-prepare
@@ -146,8 +143,6 @@ jobs:
           - runner: ubuntu-22.04
             arch: amd64
           - runner: ARM64
-            arch: arm64
-          - runner: macos-14
             arch: arm64
     timeout-minutes: 30
     name: Unit test, integration test edge
@@ -205,8 +200,6 @@ jobs:
           - runner: ubuntu-22.04
             arch: amd64
           - runner: ARM64
-            arch: arm64
-          - runner: macos-14
             arch: arm64
         cases:
           - protocol: WebSocket
@@ -292,8 +285,6 @@ jobs:
             arch: amd64
           - runner: ARM64
             arch: arm64
-          - runner: macos-14
-            arch: arm64
     timeout-minutes: 30
     name: Keadm deprecated e2e test
     needs: image-prepare
@@ -350,8 +341,6 @@ jobs:
             arch: amd64
           - runner: ARM64
             arch: arm64
-          - runner: macos-14
-            arch: arm64
     timeout-minutes: 30
     name: Keadm e2e test
     env:
@@ -402,8 +391,6 @@ jobs:
             arch: amd64
           - runner: ARM64
             arch: arm64
-          - runner: macos-14
-            arch: arm64
     timeout-minutes: 40
     name: Multiple docker image build
     steps:
@@ -434,8 +421,6 @@ jobs:
           - runner: ubuntu-22.04
             arch: amd64
           - runner: ARM64
-            arch: arm64
-          - runner: macos-14
             arch: arm64
         container-runtime: [ 'isulad', 'cri-o', 'docker' ]
     name: container runtime e2e test
@@ -490,8 +475,6 @@ jobs:
           - runner: ubuntu-22.04
             arch: amd64
           - runner: ARM64
-            arch: arm64
-          - runner: macos-14
             arch: arm64
           cases:
             - conformance-type: "conformance"
