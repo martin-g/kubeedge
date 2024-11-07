@@ -18,7 +18,7 @@
 # CHANGELOG
 # KubeEdge Authors:
 # To Get Detail Version Info for KubeEdge Project
-
+set -x
 YES="y"
 NO="n"
 
