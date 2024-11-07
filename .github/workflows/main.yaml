@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: Prepare environment
     outputs:
-      arch: ${{ steps.env.outputs.arch }}
+      arch: ${{ steps.outputs.outputs.arch }}
     steps:
       - name: Export custom outputs
         id: outputs
