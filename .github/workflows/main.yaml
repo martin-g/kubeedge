@@ -420,9 +420,10 @@ jobs:
         include:
           - runner: ubuntu-22.04
             arch: amd64
+            container-runtime: [ 'isulad', 'cri-o', 'docker' ]
           - runner: ARM64
             arch: arm64
-        container-runtime: [ 'isulad', 'cri-o', 'docker' ]
+            container-runtime: [ 'isulad', 'cri-o', 'docker' ]
     name: container runtime e2e test
     env:
       GO111MODULE: on
@@ -474,13 +475,18 @@ jobs:
           include:
           - runner: ubuntu-22.04
             arch: amd64
+            cases:
+              - conformance-type: "conformance"
+                result-name: "conformance-test-results"
+              - conformance-type: "nodeconformance"
+                result-name: "nodeconformance-test-results"
           - runner: ARM64
             arch: arm64
-          cases:
-            - conformance-type: "conformance"
-              result-name: "conformance-test-results"
-            - conformance-type: "nodeconformance"
-              result-name: "nodeconformance-test-results"
+            cases:
+              - conformance-type: "conformance"
+                result-name: "conformance-test-results"
+              - conformance-type: "nodeconformance"
+                result-name: "nodeconformance-test-results"
       steps:
         - name: Install Go
           uses: actions/setup-go@v4
