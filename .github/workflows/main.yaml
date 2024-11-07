@@ -82,7 +82,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64]
+        runner: [ubuntu-22.04, ARM64, macos-14]
     timeout-minutes: 30
     name: Prepare kubeedge/build-tools image
     steps:
@@ -103,7 +103,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64]
+        runner: [ubuntu-22.04, ARM64, macos-14]
     timeout-minutes: 30
     name: Multiple build
     needs: [common-prepare, image-prepare]
@@ -149,7 +149,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64]
+        runner: [ubuntu-22.04, ARM64, macos-14]
     timeout-minutes: 30
     name: Unit test, integration test edge
     env:
@@ -202,7 +202,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64]
+        runner: [ubuntu-22.04, ARM64, macos-14]
         cases:
           - protocol: WebSocket
             version: v1.29.0
@@ -282,7 +282,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64]
+        runner: [ubuntu-22.04, ARM64, macos-14]
     timeout-minutes: 30
     name: Keadm deprecated e2e test
     needs: [common-prepare, image-prepare]
@@ -334,7 +334,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64]
+        runner: [ubuntu-22.04, ARM64, macos-14]
     timeout-minutes: 30
     name: Keadm e2e test
     needs: common-prepare
@@ -381,7 +381,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64]
+        runner: [ubuntu-22.04, ARM64, macos-14]
     timeout-minutes: 40
     name: Multiple docker image build
     steps:
@@ -408,7 +408,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64]
+        runner: [ubuntu-22.04, ARM64, macos-14]
         container-runtime: [ 'isulad', 'cri-o', 'docker' ]
     name: container runtime e2e test
     needs: common-prepare
@@ -459,7 +459,7 @@ jobs:
       strategy:
         fail-fast: false
         matrix:
-          runner: [ubuntu-22.04, ARM64]
+          runner: [ubuntu-22.04, ARM64, macos-14]
           cases:
             - conformance-type: "conformance"
               result-name: "conformance-test-results"
