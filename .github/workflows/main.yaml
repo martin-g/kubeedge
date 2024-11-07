@@ -272,7 +272,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ${{ matrix.cases.version }}-${{ matrix.cases.protocol }}-e2e-test-logs
+          name: ${{ matrix.cases.version }}-${{ matrix.cases.protocol }}-${{ needs.common-prepare.outputs.arch }}-e2e-test-logs
           path: |
             /tmp/cloudcore.log
             /tmp/edgecore.log
@@ -444,7 +444,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ${{ matrix.container-runtime }}-e2e-test-logs
+          name: ${{ matrix.container-runtime }}-${{ needs.common-prepare.outputs.arch }}-e2e-test-logs
           path: |
             /tmp/cloudcore.log
             /tmp/edgecore.log
@@ -522,5 +522,5 @@ jobs:
           uses: actions/upload-artifact@v4
           if: always()
           with:
-            name: ${{ matrix.cases.result-name }}
+            name: ${{ matrix.cases.result-name }}-${{ needs.common-prepare.outputs.arch }}
             path: /tmp/results/
