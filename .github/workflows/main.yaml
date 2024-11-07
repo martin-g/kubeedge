@@ -57,32 +57,19 @@ jobs:
         run: make lint
         working-directory: ./src/github.com/${{ github.repository }}
   
-  common-prepare:
-    runs-on: ubuntu-22.04
-    name: Export outputs
-    outputs:
-      arch: ${{ steps.outputs.outputs.arch }}
-    steps:
-      - name: Export custom outputs
-        id: outputs
-        run: |
-          case $(uname -m) in
-            aarch64) 
-              echo "arch=arm64" >> $GITHUB_OUTPUT ;;
-            x86_64)
-              echo "arch=amd64" >> $GITHUB_OUTPUT ;;
-            *)
-              echo "Unsupported CPU architecture: $(uname -m)"
-              exit 1
-          esac
-
   image-prepare:
     runs-on: ${{ matrix.runner }}
-    needs: common-prepare
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64, macos-14]
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
+          - runner: ARM64
+            arch: arm64
+          - runner: macos-14
+            arch: arm64
+        
     timeout-minutes: 30
     name: Prepare kubeedge/build-tools image
     steps:
@@ -95,7 +82,7 @@ jobs:
       - name: Temporarily save kubeedge/build-tools image
         uses: actions/upload-artifact@v4
         with:
-          name: build-tools-docker-artifact-${{ needs.common-prepare.outputs.arch }}
+          name: build-tools-docker-artifact-${{ matrix.arch }}
           path: /home/runner/build-tools
 
   build:
@@ -103,10 +90,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64, macos-14]
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
+          - runner: ARM64
+            arch: arm64
+          - runner: macos-14
+            arch: arm64
     timeout-minutes: 30
     name: Multiple build
-    needs: [common-prepare, image-prepare]
+    needs: image-prepare
     steps:
       - uses: actions/cache@v4
         with:
@@ -121,7 +114,7 @@ jobs:
       - name: Retrieve saved kubeedge/build-tools image
         uses: actions/download-artifact@v4
         with:
-          name: build-tools-docker-artifact-${{ needs.common-prepare.outputs.arch }}
+          name: build-tools-docker-artifact-${{ matrix.arch }}
           path: /home/runner/build-tools
 
       - name: docker load kubeedge/build-tools image
@@ -149,7 +142,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64, macos-14]
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
+          - runner: ARM64
+            arch: arm64
+          - runner: macos-14
+            arch: arm64
     timeout-minutes: 30
     name: Unit test, integration test edge
     env:
@@ -202,7 +201,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64, macos-14]
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
+          - runner: ARM64
+            arch: arm64
+          - runner: macos-14
+            arch: arm64
         cases:
           - protocol: WebSocket
             version: v1.29.0
@@ -218,7 +223,7 @@ jobs:
             version: v1.27.0
     timeout-minutes: 60
     name: E2e test
-    needs: [common-prepare, image-prepare]
+    needs: image-prepare
     env:
       GO111MODULE: on
     steps:
@@ -236,7 +241,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ needs.common-prepare.outputs.arch }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ matrix.arch }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -249,7 +254,7 @@ jobs:
       - name: Retrieve saved kubeedge/build-tools image
         uses: actions/download-artifact@v4
         with:
-          name: build-tools-docker-artifact-${{ needs.common-prepare.outputs.arch }}
+          name: build-tools-docker-artifact-${{ matrix.arch }}
           path: /home/runner/build-tools
 
       - name: docker load kubeedge/build-tools image
@@ -272,7 +277,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ${{ matrix.cases.version }}-${{ matrix.cases.protocol }}-${{ needs.common-prepare.outputs.arch }}-e2e-test-logs
+          name: ${{ matrix.cases.version }}-${{ matrix.cases.protocol }}-${{ matrix.arch }}-e2e-test-logs
           path: |
             /tmp/cloudcore.log
             /tmp/edgecore.log
@@ -282,10 +287,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64, macos-14]
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
+          - runner: ARM64
+            arch: arm64
+          - runner: macos-14
+            arch: arm64
     timeout-minutes: 30
     name: Keadm deprecated e2e test
-    needs: [common-prepare, image-prepare]
+    needs: image-prepare
     env:
       GO111MODULE: on
     steps:
@@ -303,7 +314,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ needs.common-prepare.outputs.arch }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ matrix.arch }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -316,7 +327,7 @@ jobs:
       - name: Retrieve saved kubeedge/build-tools image
         uses: actions/download-artifact@v4
         with:
-          name: build-tools-docker-artifact-${{ needs.common-prepare.outputs.arch }}
+          name: build-tools-docker-artifact-${{ matrix.arch }}
           path: /home/runner/build-tools
 
       - name: docker load kubeedge/build-tools image
@@ -334,10 +345,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64, macos-14]
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
+          - runner: ARM64
+            arch: arm64
+          - runner: macos-14
+            arch: arm64
     timeout-minutes: 30
     name: Keadm e2e test
-    needs: common-prepare
     env:
       GO111MODULE: on
     steps:
@@ -355,7 +371,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ needs.common-prepare.outputs.arch }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ matrix.arch }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -381,7 +397,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64, macos-14]
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
+          - runner: ARM64
+            arch: arm64
+          - runner: macos-14
+            arch: arm64
     timeout-minutes: 40
     name: Multiple docker image build
     steps:
@@ -408,10 +430,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-22.04, ARM64, macos-14]
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
+          - runner: ARM64
+            arch: arm64
+          - runner: macos-14
+            arch: arm64
         container-runtime: [ 'isulad', 'cri-o', 'docker' ]
     name: container runtime e2e test
-    needs: common-prepare
     env:
       GO111MODULE: on
     steps:
@@ -429,7 +456,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ needs.common-prepare.outputs.arch }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ matrix.arch }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -444,7 +471,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ${{ matrix.container-runtime }}-${{ needs.common-prepare.outputs.arch }}-e2e-test-logs
+          name: ${{ matrix.container-runtime }}-${{ matrix.arch }}-e2e-test-logs
           path: |
             /tmp/cloudcore.log
             /tmp/edgecore.log
@@ -453,13 +480,19 @@ jobs:
       runs-on: ${{ matrix.runner }}
       timeout-minutes: 60
       name: conformance e2e test
-      needs: [common-prepare, image-prepare]
+      needs: image-prepare
       env:
         GO111MODULE: on
       strategy:
         fail-fast: false
         matrix:
-          runner: [ubuntu-22.04, ARM64, macos-14]
+          include:
+          - runner: ubuntu-22.04
+            arch: amd64
+          - runner: ARM64
+            arch: arm64
+          - runner: macos-14
+            arch: arm64
           cases:
             - conformance-type: "conformance"
               result-name: "conformance-test-results"
@@ -479,7 +512,7 @@ jobs:
         - name: Install dependencies
           run: |
             go install sigs.k8s.io/kind@v0.22.0
-            curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ needs.common-prepare.outputs.arch }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ matrix.arch }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
         - name: Checkout code
           uses: actions/checkout@v4
@@ -489,7 +522,7 @@ jobs:
         - name: Retrieve saved kubeedge/build-tools image
           uses: actions/download-artifact@v4
           with:
-            name: build-tools-docker-artifact-${{ needs.common-prepare.outputs.arch }}
+            name: build-tools-docker-artifact-${{ matrix.arch }}
             path: /home/runner/build-tools
 
         - name: Docker load kubeedge/build-tools image
@@ -522,5 +555,5 @@ jobs:
           uses: actions/upload-artifact@v4
           if: always()
           with:
-            name: ${{ matrix.cases.result-name }}-${{ needs.common-prepare.outputs.arch }}
+            name: ${{ matrix.cases.result-name }}-${{ matrix.arch }}
             path: /tmp/results/
