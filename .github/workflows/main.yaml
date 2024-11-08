@@ -58,7 +58,16 @@ jobs:
         working-directory: ./src/github.com/${{ github.repository }}
 
   image-prepare:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
+          - runner: ARM64
+            arch: arm64
+
     timeout-minutes: 30
     name: Prepare kubeedge/build-tools image
     steps:
@@ -71,11 +80,18 @@ jobs:
       - name: Temporarily save kubeedge/build-tools image
         uses: actions/upload-artifact@v4
         with:
-          name: build-tools-docker-artifact
+          name: build-tools-docker-artifact-${{ matrix.arch }}
           path: /home/runner/build-tools
 
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
+
     timeout-minutes: 30
     name: Multiple build
     needs: image-prepare
@@ -93,7 +109,7 @@ jobs:
       - name: Retrieve saved kubeedge/build-tools image
         uses: actions/download-artifact@v4
         with:
-          name: build-tools-docker-artifact
+          name: build-tools-docker-artifact-${{ matrix.arch }}
           path: /home/runner/build-tools
 
       - name: docker load kubeedge/build-tools image
@@ -117,7 +133,13 @@ jobs:
       - run: make crossbuild WHAT=keadm OS=GOOSwindows BUILD_WITH_CONTAINER=false
 
   basic_test:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
     timeout-minutes: 30
     name: Unit test, integration test edge
     env:
@@ -166,9 +188,13 @@ jobs:
       - run: make integrationtest
 
   e2e_test:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runner }}
     strategy:
+      fail-fast: false
       matrix:
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
         cases:
           - protocol: WebSocket
             version: v1.29.0
@@ -202,7 +228,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ matrix.arch }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -215,7 +241,7 @@ jobs:
       - name: Retrieve saved kubeedge/build-tools image
         uses: actions/download-artifact@v4
         with:
-          name: build-tools-docker-artifact
+          name: build-tools-docker-artifact-${{ matrix.arch }}
           path: /home/runner/build-tools
 
       - name: docker load kubeedge/build-tools image
@@ -238,13 +264,19 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ${{ matrix.cases.version }}-${{ matrix.cases.protocol }}-e2e-test-logs
+          name: ${{ matrix.cases.version }}-${{ matrix.cases.protocol }}-${{ matrix.arch }}-e2e-test-logs
           path: |
             /tmp/cloudcore.log
             /tmp/edgecore.log
 
   keadm_deprecated_e2e_test:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
     timeout-minutes: 30
     name: Keadm deprecated e2e test
     needs: image-prepare
@@ -265,7 +297,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ matrix.arch }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -278,7 +310,7 @@ jobs:
       - name: Retrieve saved kubeedge/build-tools image
         uses: actions/download-artifact@v4
         with:
-          name: build-tools-docker-artifact
+          name: build-tools-docker-artifact-${{ matrix.arch }}
           path: /home/runner/build-tools
 
       - name: docker load kubeedge/build-tools image
@@ -292,7 +324,13 @@ jobs:
       - run: make keadm_deprecated_e2e
 
   keadm_e2e_test:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
     timeout-minutes: 30
     name: Keadm e2e test
     env:
@@ -312,7 +350,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ matrix.arch }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -334,9 +372,19 @@ jobs:
       - run: make keadm_e2e
 
   docker_build:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
+          - runner: ARM64
+            arch: arm64
     timeout-minutes: 40
     name: Multiple docker image build
+    env:
+      DOCKER_BUILD_AND_SYSTEM_PRUNE: true
     steps:
       - uses: actions/cache@v4
         with:
@@ -351,14 +399,18 @@ jobs:
       - name: cleanup images
         run: docker system prune -a -f
 
-      - name: make image
-        run: |
-          export DOCKER_BUILD_AND_SYSTEM_PRUNE="true"
-          make image
+      - name: make image amd64
+        if: ${{ matrix.arch == 'amd64' }}
+        run: make image
+
+      - name: make image arm64
+        if: ${{ matrix.arch == 'arm64' }}
+        run: make smallbuild
 
   container_runtime_test:
     runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         container-runtime: [ 'isulad', 'cri-o', 'docker' ]
     name: container runtime e2e test
@@ -394,7 +446,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ${{ matrix.container-runtime }}-e2e-test-logs
+          name: ${{ matrix.container-runtime }}-amd64-e2e-test-logs
           path: |
             /tmp/cloudcore.log
             /tmp/edgecore.log
@@ -407,6 +459,7 @@ jobs:
       env:
         GO111MODULE: on
       strategy:
+        fail-fast: false
         matrix:
           cases:
             - conformance-type: "conformance"
@@ -437,7 +490,7 @@ jobs:
         - name: Retrieve saved kubeedge/build-tools image
           uses: actions/download-artifact@v4
           with:
-            name: build-tools-docker-artifact
+            name: build-tools-docker-artifact-amd64
             path: /home/runner/build-tools
 
         - name: Docker load kubeedge/build-tools image

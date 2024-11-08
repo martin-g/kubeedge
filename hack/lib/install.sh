@@ -14,6 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+case $(uname -m) in
+  aarch64)
+    export ARCH="arm64" ;;
+  x86_64)
+    export ARCH="amd64" ;;
+  *)
+    echo "Unsupported CPU architecture: $(uname -m)"
+    exit 1
+esac
+
 # check if kubectl installed
 function check_kubectl {
   echo "checking kubectl"
@@ -120,7 +130,7 @@ verify_isulad_installed() {
 
 # install CNI plugins
 function install_cni_plugins() {
-  CNI_DOWNLOAD_ADDR=${CNI_DOWNLOAD_ADDR:-"https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz"}
+  CNI_DOWNLOAD_ADDR=${CNI_DOWNLOAD_ADDR:-"https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-${ARCH}-v1.1.1.tgz"}
   CNI_PKG=${CNI_DOWNLOAD_ADDR##*/}
   CNI_CONF_OVERWRITE=${CNI_CONF_OVERWRITE:-"true"}
   echo -e "The installation of the cni plugin will overwrite the cni config file. Use export CNI_CONF_OVERWRITE=false to disable it."
@@ -193,6 +203,20 @@ EOF'
 
 function install_docker() {
   CRIDOCKERD_VERSION="v0.3.8"
+
+  source /etc/os-release
+
+  if [ "${ID}" = "ubuntu" ]; then
+    install_docker_ubuntu
+  elif [ "${ID}" = "openEuler" ]; then
+    install_docker_openEuler
+  else
+    echo "Unsupported OS: ${ID}"
+    exit 123
+  fi
+}
+
+function install_docker_ubuntu() {
   sudo apt-get update
   sudo apt-get install \
     apt-transport-https \
@@ -218,11 +242,33 @@ function install_docker() {
   cd .. && sudo rm -rf cri-dockerd
 }
 
+function install_docker_openEuler() {
+  sudo dnf update
+  sudo dnf install -y \
+    ca-certificates \
+    curl \
+    wget \
+    gnupg2
+
+  wget https://raw.githubusercontent.com/cnrancher/euler-packer/refs/heads/main/scripts/others/install-docker.sh
+  bash install-docker.sh --buildx --crictl
+  git clone https://github.com/Mirantis/cri-dockerd.git -b ${CRIDOCKERD_VERSION}
+  cd cri-dockerd
+  make cri-dockerd
+  sudo install -o root -g root -m 0755 cri-dockerd /usr/local/bin/cri-dockerd
+  sudo install packaging/systemd/* /etc/systemd/system
+  sudo sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now cri-docker.socket
+  sudo systemctl restart cri-docker
+  cd .. && sudo rm -rf cri-dockerd
+}
+
 function install_crio() {
   CRIO_VERSION="1.28.2"
-  sudo rm -rf cri-o.amd64.v${CRIO_VERSION}.tar.gz && sudo rm -rf cri-o
-  sudo wget https://storage.googleapis.com/cri-o/artifacts/cri-o.amd64.v${CRIO_VERSION}.tar.gz
-  sudo tar -zxvf cri-o.amd64.v${CRIO_VERSION}.tar.gz
+  sudo rm -rf cri-o.${ARCH}.v${CRIO_VERSION}.tar.gz && sudo rm -rf cri-o
+  sudo wget https://storage.googleapis.com/cri-o/artifacts/cri-o.${ARCH}.v${CRIO_VERSION}.tar.gz
+  sudo tar -zxvf cri-o.${ARCH}.v${CRIO_VERSION}.tar.gz
   sudo sed -i 's/\/usr\/bin\/env sh/!\/bin\/bash/' cri-o/install
   sudo sed -i 's/ExecStart=.*/ExecStart=\/usr\/local\/bin\/crio --selinux=false \\/' cri-o/contrib/crio.service
   cd cri-o
@@ -230,7 +276,7 @@ function install_crio() {
   sudo systemctl daemon-reload
   sudo systemctl enable --now crio
   sudo systemctl restart crio
-  cd .. && sudo rm -rf cri-o.amd64.v${CRIO_VERSION}.tar.gz && sudo rm -rf cri-o
+  cd .. && sudo rm -rf cri-o.${ARCH}.v${CRIO_VERSION}.tar.gz && sudo rm -rf cri-o
 }
 
 install_isulad() {
@@ -242,7 +288,22 @@ install_isulad() {
     cd $(dirname $0)
     pwd
   )
-  sudo apt-get install -y g++ libprotobuf-dev protobuf-compiler protobuf-compiler-grpc libgrpc++-dev libgrpc-dev libtool automake autoconf cmake make pkg-config libyajl-dev zlib1g-dev libselinux1-dev libseccomp-dev libcap-dev libsystemd-dev git libarchive-dev libcurl4-gnutls-dev openssl libdevmapper-dev python3 libtar0 libtar-dev libhttp-parser-dev libwebsockets-dev
+
+  source /etc/os-release
+
+  if [ "${ID}" = "ubuntu" ]; then
+    sudo apt-get install -y g++ libprotobuf-dev protobuf-compiler protobuf-compiler-grpc libgrpc++-dev libgrpc-dev libtool automake autoconf cmake make pkg-config libyajl-dev zlib1g-dev libselinux1-dev libseccomp-dev libcap-dev libsystemd-dev git libarchive-dev libcurl4-gnutls-dev openssl libdevmapper-dev python3 libtar0 libtar-dev libhttp-parser-dev libwebsockets-dev jq
+  elif [ "${ID}" = "openEuler" ]; then
+    sudo dnf install -y gcc-toolset-12-gcc-c++ protobuf-devel protobuf-compiler grpc grpc-devel libtool automake autoconf cmake make pkgconf yajl-devel zlib-devel libselinux-devel libseccomp-devel libcap-devel systemd-devel git libarchive-devel libcurl openssl python3 libtar libtar-devel http-parser-devel libwebsockets-devel jq
+    # No matching packages: libdevmapper-dev
+    export PATH="/opt/openEuler/gcc-toolset-12/root/usr/bin:${PATH}"
+    export LD_LIBRARY_PATH="/opt/openEuler/gcc-toolset-12/root/usr/lib64:${LD_LIBRARY_PATH}"
+    export CPATH="/opt/openEuler/gcc-toolset-12/root/usr/include:${CPATH}"
+  else
+    echo "Unsupported OS: ${ID}"
+    exit 123
+  fi
+
   BUILD_DIR=/tmp/build_isulad
 
   sudo rm -rf $BUILD_DIR
@@ -290,7 +351,6 @@ install_isulad() {
   sudo make -j $(nproc)
   sudo make install
 
-  sudo apt-get install -y jq
   sudo sed -i 's#/usr/bin/isulad#/usr/local/bin/isulad#g' ../src/contrib/init/isulad.service
   sudo sed -i 's#-/etc/sysconfig/iSulad#/etc/isulad/daemon.json#g' ../src/contrib/init/isulad.service
   TMP_FILE=/home/runner/tmp.json
