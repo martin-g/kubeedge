@@ -91,8 +91,6 @@ jobs:
         include:
           - runner: ubuntu-22.04
             arch: amd64
-          - runner: ARM64
-            arch: arm64
 
     timeout-minutes: 30
     name: Multiple build
@@ -142,8 +140,6 @@ jobs:
         include:
           - runner: ubuntu-22.04
             arch: amd64
-          - runner: ARM64
-            arch: arm64
     timeout-minutes: 30
     name: Unit test, integration test edge
     env:
@@ -199,8 +195,6 @@ jobs:
         include:
           - runner: ubuntu-22.04
             arch: amd64
-          - runner: ARM64
-            arch: arm64
         cases:
           - protocol: WebSocket
             version: v1.29.0
@@ -283,8 +277,6 @@ jobs:
         include:
           - runner: ubuntu-22.04
             arch: amd64
-          - runner: ARM64
-            arch: arm64
     timeout-minutes: 30
     name: Keadm deprecated e2e test
     needs: image-prepare
@@ -339,8 +331,6 @@ jobs:
         include:
           - runner: ubuntu-22.04
             arch: amd64
-          - runner: ARM64
-            arch: arm64
     timeout-minutes: 30
     name: Keadm e2e test
     env:
@@ -418,17 +408,11 @@ jobs:
         run: make smallbuild
 
   container_runtime_test:
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - runner: ubuntu-22.04
-            arch: amd64
-            container-runtime: [ 'isulad', 'cri-o', 'docker' ]
-          - runner: ARM64
-            arch: arm64
-            container-runtime: [ 'isulad', 'cri-o', 'docker' ]
+        container-runtime: [ 'isulad', 'cri-o', 'docker' ]
     name: container runtime e2e test
     env:
       GO111MODULE: on
@@ -447,7 +431,7 @@ jobs:
         run: |
           command -v ginkgo || go install github.com/onsi/ginkgo/v2/ginkgo@${{ env.GINKGO_VERSION }}
           go install sigs.k8s.io/kind@v0.22.0
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ matrix.arch }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -462,13 +446,13 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ${{ matrix.container-runtime }}-${{ matrix.arch }}-e2e-test-logs
+          name: ${{ matrix.container-runtime }}-amd64-e2e-test-logs
           path: |
             /tmp/cloudcore.log
             /tmp/edgecore.log
 
   conformance_e2e_test:
-      runs-on: ${{ matrix.runner }}
+      runs-on: ubuntu-22.04
       timeout-minutes: 60
       name: conformance e2e test
       needs: image-prepare
@@ -477,21 +461,11 @@ jobs:
       strategy:
         fail-fast: false
         matrix:
-          include:
-          - runner: ubuntu-22.04
-            arch: amd64
-            cases:
-              - conformance-type: "conformance"
-                result-name: "conformance-test-results"
-              - conformance-type: "nodeconformance"
-                result-name: "nodeconformance-test-results"
-          - runner: ARM64
-            arch: arm64
-            cases:
-              - conformance-type: "conformance"
-                result-name: "conformance-test-results"
-              - conformance-type: "nodeconformance"
-                result-name: "nodeconformance-test-results"
+          cases:
+            - conformance-type: "conformance"
+              result-name: "conformance-test-results"
+            - conformance-type: "nodeconformance"
+              result-name: "nodeconformance-test-results"
       steps:
         - name: Install Go
           uses: actions/setup-go@v4
@@ -506,7 +480,7 @@ jobs:
         - name: Install dependencies
           run: |
             go install sigs.k8s.io/kind@v0.22.0
-            curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/${{ matrix.arch }}/kubectl && sudo install kubectl /usr/local/bin/kubectl
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.29.5/bin/linux/amd64/kubectl && sudo install kubectl /usr/local/bin/kubectl
 
         - name: Checkout code
           uses: actions/checkout@v4
@@ -516,7 +490,7 @@ jobs:
         - name: Retrieve saved kubeedge/build-tools image
           uses: actions/download-artifact@v4
           with:
-            name: build-tools-docker-artifact-${{ matrix.arch }}
+            name: build-tools-docker-artifact-amd64
             path: /home/runner/build-tools
 
         - name: Docker load kubeedge/build-tools image
@@ -549,5 +523,5 @@ jobs:
           uses: actions/upload-artifact@v4
           if: always()
           with:
-            name: ${{ matrix.cases.result-name }}-${{ matrix.arch }}
+            name: ${{ matrix.cases.result-name }}
             path: /tmp/results/
