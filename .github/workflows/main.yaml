@@ -393,6 +393,8 @@ jobs:
             arch: arm64
     timeout-minutes: 40
     name: Multiple docker image build
+    env:
+      DOCKER_BUILD_AND_SYSTEM_PRUNE: true
     steps:
       - uses: actions/cache@v4
         with:
@@ -407,10 +409,13 @@ jobs:
       - name: cleanup images
         run: docker system prune -a -f
 
-      - name: make image
-        run: |
-          export DOCKER_BUILD_AND_SYSTEM_PRUNE="true"
-          make image
+      - name: make image amd64
+        if: ${{ matrix.arch == 'amd64' }}
+        run: make image
+
+      - name: make image arm64
+        if: ${{ matrix.arch == 'arm64' }}
+        run: make smallbuild
 
   container_runtime_test:
     runs-on: ${{ matrix.runner }}
