@@ -18,7 +18,7 @@
 # CHANGELOG
 # KubeEdge Authors:
 # To Get Detail Version Info for KubeEdge Project
-
+set -x
 YES="y"
 NO="n"
 
@@ -53,7 +53,8 @@ kubeedge::version::get_version_info() {
     GIT_TREE_STATE="dirty"
   fi
 
-  GIT_VERSION=$(git describe --tags --abbrev=14 "${GIT_COMMIT}^{commit}" 2>/dev/null)
+  #GIT_VERSION=$(git describe --tags --abbrev=14 "${GIT_COMMIT}^{commit}" 2>/dev/null)
+  GIT_VERSION=v1.19.0-beta.0-62-gf6819974e19ae6
 
   # This translates the "git describe" to an actual semver.org
   # compatible semantic version that looks something like this:
@@ -210,6 +211,7 @@ IFS=" " read -ra KUBEEDGE_ALL_TARGETS <<< "$(kubeedge::golang::get_all_targets)"
 IFS=" " read -ra KUBEEDGE_ALL_BINARIES<<< "$(kubeedge::golang::get_all_binaries)"
 
 kubeedge::golang::build_binaries() {
+  set -x
   kubeedge::check::env
   local -a targets=()
   local binArg
@@ -237,7 +239,7 @@ kubeedge::golang::build_binaries() {
     go build -o ${KUBEEDGE_OUTPUT_BINPATH}/${name} -gcflags="${gogcflags:-}" -ldflags "${goldflags:-}" $bin
     set +x
   done
-
+  set +x
 }
 
 KUBEEDGE_ALL_CROSS_GOARMS=(

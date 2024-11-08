@@ -19,6 +19,7 @@
 set -o errexit
 set -o nounset
 set -o pipefail
+set -x
 
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 
@@ -39,7 +40,8 @@ ALL_IMAGES_AND_TARGETS=(
 )
 
 GO_LDFLAGS="$(${KUBEEDGE_ROOT}/hack/make-rules/version.sh)"
-IMAGE_TAG=$(git describe --tags)
+#IMAGE_TAG=$(git describe --tags)
+IMAGE_TAG=v1.19.0-beta.0-63-gd0d4bcd3f
 DOCKER_BUILD_AND_SYSTEM_PRUNE=${DOCKER_BUILD_AND_SYSTEM_PRUNE:-"false"}
 
 function get_imagename_by_target() {
@@ -71,6 +73,7 @@ function get_dockerfile_by_target() {
 }
 
 function build_images() {
+  set -x
   local -a targets=()
 
   for arg in "$@"; do
@@ -87,15 +90,14 @@ function build_images() {
     IMAGE_NAME="$(get_imagename_by_target ${arg})"
     DOCKERFILE_PATH="$(get_dockerfile_by_target ${arg})"
 
-    set -x
     docker build --build-arg GO_LDFLAGS="${GO_LDFLAGS}" -t kubeedge/${IMAGE_NAME}:${IMAGE_TAG} -f ${DOCKERFILE_PATH} .
-    set +x
-
+  
     if [[ "${DOCKER_BUILD_AND_SYSTEM_PRUNE}" = "true" ]]; then
       docker builder prune -f
       docker system prune -f
     fi
   done
+  set +x
 }
 
 build_images "$@"

@@ -32,6 +32,7 @@ function cleanup() {
 }
 
 function build_image() {
+  set -x
   cd $KUBEEDGE_ROOT
   make image WHAT=cloudcore -f $KUBEEDGE_ROOT/Makefile
   make image WHAT=installation-package -f $KUBEEDGE_ROOT/Makefile
@@ -49,6 +50,7 @@ function build_image() {
   docker rmi $(docker images -f "dangling=true" -q)
   docker system prune -f
   set -Ee
+  set +x
 }
 
 function start_kubeedge() {
