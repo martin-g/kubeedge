@@ -1,4 +1,4 @@
-name: Main CI WorkFlow
+name: ARM64 CI WorkFlow
 
 on:
   push:
