@@ -23,7 +23,7 @@ env:
 
 jobs:
   image-prepare:
-    runs-on: ARM64
+    runs-on: self-hosted
     timeout-minutes: 30
     name: Prepare kubeedge/build-tools image
     steps:
