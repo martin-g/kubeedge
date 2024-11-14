@@ -42,7 +42,7 @@ jobs:
   docker_build:
     runs-on: openeuler-linux-arm64
     timeout-minutes: 40
-    name: Multiple docker image build
+    name: Multiple build
     env:
       DOCKER_BUILD_AND_SYSTEM_PRUNE: true
     steps:
